@@ -1,7 +1,8 @@
 name: Discordverifybot
 version: ${project.version}
-main: de.tom.discordverifybot.Discordverifybot
-api-version: 1.17
+main: de.tom.discordverifybot.DiscordVerifyBot
 authors: [ T0myy, Yasaki ]
 description: This is a Discordbot for Verifying Users on the Discord in Minecraft
 website: t0myy.ch
+commands:
+  verify:
