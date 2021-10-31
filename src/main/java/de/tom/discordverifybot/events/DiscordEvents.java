@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
 import java.awt.*;
 import java.util.Random;
 
@@ -31,9 +32,10 @@ public class DiscordEvents extends ListenerAdapter {
         this.event = event;
         if (event.getMessage().getChannel().getId().equalsIgnoreCase("902630431764119602")) {
             System.out.println(event.getMessage().getContentDisplay());
+
             if (plugin.getJoinedPlayers().contains(event.getMessage().getContentDisplay())) {
                 System.out.println("on server");
-                if (plugin.getHikariCP().isPlayerInList(event.getAuthor().getId()) == false) {
+                if (!plugin.getHikariCP().isPlayerInList(event.getAuthor().getId())) {
                     System.out.println("not in DAtabase");
                     Player player = Bukkit.getPlayer(event.getMessage().getContentDisplay().toLowerCase());
                     if (!plugin.getRequestedCode().contains(event.getAuthor())) {
@@ -42,73 +44,60 @@ public class DiscordEvents extends ListenerAdapter {
                         createVerifyPrivatEmbed(event, password);
                         plugin.getVerifyCodes().put(player, password);
                         plugin.getDiscordID().put(player, event.getAuthor().getId());
-                        System.out.println(player.getUniqueId());
-                        createVerifyEmbed(event);
+                        createEmbed(
+                                "MC-Verification",
+                                null,
+                                Color.green,
+                                "The bot has created a code for you, have a look at the private message",
+                                "T-Verification",
+                                null,
+                                null,
+                                "T-Verification",
+                                null);
                     } else {
-                        createErrorAlreadyEmbed(event);
+                        createEmbed(
+                                "MC-Verification",
+                                null,
+                                Color.red,
+                                "You have already requested a code.",
+                                "T-Verification",
+                                null,
+                                null,
+                                "T-Verification",
+                                null);
                     }
 
                 } else {
                     System.out.println(plugin.getHikariCP().isPlayerInList(event.getAuthor().getId()));
                     System.out.println("allredy in DB");
-                    createErrorEmbed(event);
+                    createEmbed(
+                            "MC-Verification",
+                            null,
+                            Color.red,
+                            "Your DiscordID is already in use, write to a team member.",
+                            "T-Verification",
+                            null,
+                            null,
+                            "T-Verification",
+                            null);
                 }
-            } else {
-                System.out.println("not on server");
+            } else if (!plugin.getJoinedPlayers().contains(event.getMessage().getContentDisplay())){
+                    createEmbed(
+                            "MC-Verification",
+                            null,
+                            Color.red,
+                            "This Player is not Online or Doesn't exists",
+                            "T-Verification",
+                            null,
+                            null,
+                            "T-Verification",
+                            null);
+                System.out.println("Player Not Online");
+
             }
         }
     }
 
-    public void createErrorEmbed(MessageReceivedEvent event) {
-        EmbedBuilder eb = new EmbedBuilder();
-
-        eb.setTitle("MC-Verification", null);
-        eb.setColor(Color.red);
-        eb.setColor(new Color(0xF40C0C));
-        eb.setColor(new Color(255, 0, 54));
-
-        eb.setDescription("Your DiscordID is already in use, write to a team member.");
-
-        eb.setAuthor("T-Verification", null, null);
-
-        eb.setFooter("T-Verification", null);
-
-        event.getChannel().sendMessage(eb.build()).queue();
-    }
-
-    public void createErrorAlreadyEmbed(MessageReceivedEvent event) {
-        EmbedBuilder eb = new EmbedBuilder();
-
-        eb.setTitle("MC-Verification", null);
-        eb.setColor(Color.red);
-        eb.setColor(new Color(0xF40C0C));
-        eb.setColor(new Color(255, 0, 54));
-
-        eb.setDescription("You have already requested a code.");
-
-        eb.setAuthor("T-Verification", null, null);
-
-        eb.setFooter("T-Verification", null);
-
-        event.getChannel().sendMessage(eb.build()).queue();
-    }
-
-    public void createVerifyEmbed(MessageReceivedEvent event) {
-        EmbedBuilder eb = new EmbedBuilder();
-
-        eb.setTitle("MC-Verification", null);
-        eb.setColor(Color.red);
-        eb.setColor(new Color(0x78F40C));
-        eb.setColor(new Color(0, 255, 67));
-
-        eb.setDescription("The bot has created a code for you, have a look at the private message");
-
-        eb.setAuthor("T-Verification", null, null);
-
-        eb.setFooter("T-Verification", null);
-
-        event.getChannel().sendMessage(eb.build()).queue();
-    }
 
     public void createVerifyPrivatEmbed(MessageReceivedEvent event, String password) {
         EmbedBuilder eb = new EmbedBuilder();
@@ -120,9 +109,9 @@ public class DiscordEvents extends ListenerAdapter {
 
         eb.setDescription("Thank you for the verification, if you have any bugs or need help please contact the server team.\n" +
                 "\n" +
-                "Your code: " + password +
-                "\n" +
-                "\nUse /Verify " + password + " to verify your Discord account");
+                "Your code: **" + password +
+                "**\n" +
+                "\nUse **/Verify " + password + "** to verify your Discord account");
 
         eb.setAuthor("T-Verification", null, null);
 
@@ -131,6 +120,22 @@ public class DiscordEvents extends ListenerAdapter {
         event.getAuthor().openPrivateChannel().queue(pc -> pc.sendMessage(eb.build()).queue(), t -> {
             event.getPrivateChannel().sendMessage("Failed").queue();
         });
+
+    }
+
+    public void createEmbed(@Nullable String title, @Nullable String url, Color color, String desc, String author, @Nullable String authorUrl, @Nullable String iconUrl, String footer, @Nullable String iconUrlFooter) {
+        EmbedBuilder eb = new EmbedBuilder();
+
+        eb.setTitle(title, url);
+        eb.setColor(color);
+
+        eb.setDescription(desc);
+
+        eb.setAuthor(author, authorUrl, iconUrl);
+
+        eb.setFooter(footer, iconUrlFooter);
+
+        event.getChannel().sendMessage(eb.build()).submit();
 
     }
 
@@ -153,11 +158,6 @@ public class DiscordEvents extends ListenerAdapter {
         });
 
 
-    }
-    public static void sendPM(TextChannel channel, User user, String message, String fail) {
-        user.openPrivateChannel().queue(pc -> pc.sendMessage(message).queue(), t -> {
-            channel.sendMessage(fail).queue();
-        });
     }
 
     public static String generateRandomPassword(int len) {

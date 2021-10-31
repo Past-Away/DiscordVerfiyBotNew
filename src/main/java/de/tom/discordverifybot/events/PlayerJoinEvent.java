@@ -28,5 +28,11 @@ public class PlayerJoinEvent implements Listener {
             plugin.getJoinedPlayers().add(event.getPlayer().getName());
             System.out.println("Array: " + plugin.getJoinedPlayers());
         }
+
+        if (!plugin.getHikariCP().isPlayerInListMcUUID(player.getUniqueId().toString())) {
+           player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 2000000,100));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2000000,100));
+            player.sendTitle("§aPlease verify yourself in the Discord", "§7/verify §7<code>", 20, 2000000, 20);
+        }
     }
 }

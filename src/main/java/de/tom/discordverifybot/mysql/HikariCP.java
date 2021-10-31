@@ -28,7 +28,6 @@ public class HikariCP {
             config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
             ds = new HikariDataSource(config);
             System.out.println("MySQL Connected");
-            System.out.println(ds.getConnection());
         } catch (Exception e) {
             Bukkit.getConsoleSender().sendMessage("§4The connection was disconnected, please check if the login data is correct in MySQL.yml");
             e.printStackTrace();
@@ -55,6 +54,16 @@ public class HikariCP {
     public boolean isPlayerInList(String dcId) {
         try {
             ResultSet rs = getResult("SELECT * FROM VerifiedUsers WHERE Discord_ID = '"+dcId+"'");
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isPlayerInListMcUUID(String uuid) {
+        try {
+            ResultSet rs = getResult("SELECT * FROM VerifiedUsers WHERE UUID_Minecraft = '"+uuid+"'");
             return rs.next();
         } catch (Exception e) {
             e.printStackTrace();

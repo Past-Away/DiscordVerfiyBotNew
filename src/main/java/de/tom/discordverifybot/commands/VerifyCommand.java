@@ -6,6 +6,7 @@ import de.tom.discordverifybot.mysql.Methods;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -43,7 +44,9 @@ public class VerifyCommand implements CommandExecutor {
 
                     player.removePotionEffect(PotionEffectType.SLOW);
                     player.removePotionEffect(PotionEffectType.BLINDNESS);
-
+                    player.resetTitle();
+                    player.sendTitle("§aWelcome to the official test server of", "§fT-Codes", 20, 20*7, 20);
+                    player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_HURT, 1,1);
                 } else {
                     player.sendMessage("§cYou have the wrong code please check the chat again");
                 }

@@ -27,6 +27,7 @@ public final class DiscordVerifyBot extends JavaPlugin {
     public ArrayList<User> requestedCode = new ArrayList<>();
     public HashMap<Player, String> VerifyCodes = new HashMap<>();
     public HashMap<Player, String> DiscordID = new HashMap<>();
+    public HashMap<Player, String> FirstDiscordID = new HashMap<>();
     @Override
     public void onEnable() {
         instance = this;
@@ -83,5 +84,9 @@ public final class DiscordVerifyBot extends JavaPlugin {
 
     public ArrayList<User> getRequestedCode() {
         return requestedCode;
+    }
+
+    public HashMap<Player, String> getFirstDiscordID() {
+        return FirstDiscordID;
     }
 }
