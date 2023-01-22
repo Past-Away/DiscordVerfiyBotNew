@@ -1,0 +1,20 @@
+discord:
+  token: ""
+  guildId: ""
+  verifyRole: ""
+  codeMessage: "Dein Verifizierungscode lautet: %code%"
+  userNotOnServer: "Du bist nicht auf Server"
+  alreadyInQueue: "Du bist bereits in der Warteschlange"
+  alreadyVerified: "Du bist bereits verifiziert!"
+  notVerified: "Du bist nicht verifiziert!"
+  successfullyDisconnect: "Du wurdest erfolgreich vom Minecraft Account getrennt"
+  roleNotFound: "Die Rolle wurde nicht gefunden"
+messages:
+  prefix: "&aVerify &8&l| &7"
+  wrongUsage: "%prefix% &cFalsche Verwendung! &7Nutze &c/verify <code>"
+  isNotInVerifyQueue: "%prefix% &cDu bist nicht in der Warteschlange!"
+  wrongCode: "%prefix% &cDer Code ist falsch!"
+  verifySuccessfully: "%prefix% &aDu wurdest erfolgreich verifiziert!"
+title:
+  firstLine: "&aVerify"
+  secondLine: "&7Mit &a/verify <code>"

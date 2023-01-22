@@ -1,65 +1,61 @@
 package de.tom.discordverifybot.commands;
 
 import de.tom.discordverifybot.DiscordVerifyBot;
-import de.tom.discordverifybot.events.DiscordEvents;
-import de.tom.discordverifybot.mysql.Methods;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Member;
+
 public class VerifyCommand implements CommandExecutor {
 
-    DiscordVerifyBot plugin;
+    private DiscordVerifyBot plugin;
 
-    MessageReceivedEvent events = DiscordEvents.event;
     public VerifyCommand(DiscordVerifyBot plugin) {
         this.plugin = plugin;
     }
 
-
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label,String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
+
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(plugin.getPrefix() + "§cDu musst ein Spieler sein um diesen Befehl auszuführen!");
+            return true;
+        }
 
         Player player = (Player) sender;
 
         if (args.length == 1) {
-            if (plugin.getVerifyCodes().containsKey(player)) {
-                if (args[0].equalsIgnoreCase(plugin.getVerifyCodes().get(player))) {
-                    player.sendMessage("§aVErifed");
-                    plugin.getVerifyCodes().remove(player);
-                    User user = plugin.getJda().retrieveUserById(plugin.getDiscordID().get(player)).complete();
-                    plugin.getHikariCP().setVerifiedUser(player, player.getUniqueId(), player.getName(), plugin.getDiscordID().get(player), user.getName());
-
-                    DiscordEvents.createFinishVerifyPrivatEmbed(plugin,user);
-                    plugin.getVerifyCodes().remove(player);
-                    plugin.getRequestedCode().remove(user);
-
-                    player.removePotionEffect(PotionEffectType.SLOW);
-                    player.removePotionEffect(PotionEffectType.BLINDNESS);
-                    player.resetTitle();
-                    player.sendTitle("§aWelcome to the official test server of", "§fT-Codes", 20, 20*7, 20);
-                    player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_HURT, 1,1);
+            if (plugin.getVerifyQueueRepository().isInVerifyQueue(player)) {
+                String code = plugin.getVerifyQueueRepository().getVerify(player);
+                if (args[0].equalsIgnoreCase(code)) {
+                    User user = plugin.getBot().getJda().getUserById(plugin.getVerifyQueueRepository().getVerifySave(player));
+                    if (user != null) {
+                        plugin.getVerifyQueueRepository().removeVerify(player);
+                        plugin.getVerifiedPlayersFile().addVerifiedPlayer(player.getUniqueId().toString(), user.getId());
+                        try {
+                            plugin.getBot().addRoleToUser(user);
+                        } catch (Exception e) {
+                            player.sendMessage(plugin.getPrefix() + "§cEs ist ein Fehler aufgetreten! Bitte melde diesen Fehler an einen Admin!");
+                        }
+                        player.sendMessage(plugin.getConfig().getString("messages.verifySuccessfully").replace("&", "§").replace("%prefix%", plugin.getPrefix()));
+                        player.removePotionEffect(PotionEffectType.SLOW);
+                        player.removePotionEffect(PotionEffectType.BLINDNESS);
+                        player.resetTitle();
+                    }
                 } else {
-                    player.sendMessage("§cYou have the wrong code please check the chat again");
+                    player.sendMessage(plugin.getConfig().getString("messages.wrongCode").replace("&", "§").replace("%prefix%", plugin.getPrefix()));
                 }
             } else {
-                player.sendMessage("§cYou do not have a code please verify in discord");
+                player.sendMessage(plugin.getConfig().getString("messages.isNotInVerifyQueue").replace("&", "§").replace("%prefix%", plugin.getPrefix()));
             }
-
         } else {
-            player.sendMessage("§7----- §aDiscordVerify §7-----");
-            player.sendMessage("§8- §e/Verify §7<§ccode§7>");
-            player.sendMessage("§7----- §aDiscordVerify §7-----");
+            player.sendMessage(plugin.getConfig().getString("messages.wrongUsage").replace("&", "§").replace("%prefix%", plugin.getPrefix()));
         }
-
 
         return false;
     }

@@ -1,92 +1,88 @@
 package de.tom.discordverifybot;
 
+import de.tom.discordverifybot.bot.Bot;
 import de.tom.discordverifybot.commands.VerifyCommand;
-import de.tom.discordverifybot.events.DiscordEvents;
-import de.tom.discordverifybot.events.PlayerJoinEvent;
-import de.tom.discordverifybot.events.PlayerQuitEvent;
-import de.tom.discordverifybot.mysql.HikariCP;
-import de.tom.discordverifybot.mysql.Methods;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.User;
+import de.tom.discordverifybot.events.BlockListener;
+import de.tom.discordverifybot.events.PlayerDamageListener;
+import de.tom.discordverifybot.events.PlayerJoinListener;
+import de.tom.discordverifybot.utils.VerifyQueueRepository;
+import de.tom.discordverifybot.utils.files.VerifiedPlayersFile;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.net.UnknownServiceException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.logging.Level;
 
 public final class DiscordVerifyBot extends JavaPlugin {
 
-    JDA jda;
-    HikariCP hikariCP;
-    Methods methods;
-    public static DiscordVerifyBot instance;
-    public ArrayList<String> JoinedPlayers = new ArrayList<>();
-    public ArrayList<User> requestedCode = new ArrayList<>();
-    public HashMap<Player, String> VerifyCodes = new HashMap<>();
-    public HashMap<Player, String> DiscordID = new HashMap<>();
-    public HashMap<Player, String> FirstDiscordID = new HashMap<>();
+    private static DiscordVerifyBot instance;
+    private Bot bot;
+
+    private VerifyQueueRepository verifyQueueRepository;
+
+    private String prefix;
+
+    private VerifiedPlayersFile verifiedPlayersFile;
+
+    //hier die ip einfügen
+    private String[] ips = new String[] {
+            "185.117.0.214",
+    };
+
     @Override
     public void onEnable() {
-        instance = this;
-        hikariCP = new HikariCP(this);
-        startDiscordBot();
-        Bukkit.getPluginManager().registerEvents(new PlayerJoinEvent(this), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerQuitEvent(this), this);
-        getCommand("verify").setExecutor(new VerifyCommand(this));
+        for (String ip : ips) {
+            if(Bukkit.getServer().getIp().equals(ip)) {
+                instance = this;
+                getLogger().log(Level.INFO,"Discord-Verify | Das Plugin wurde erfolgreich geladen!");
+                getLogger().log(Level.INFO,"Discord-Verify | Der Bot wird gestartet...");
+                onInit();
+            } else {
+                getLogger().log(Level.INFO,"Discord-Verify | Du besitzt keine Lizenz für dieses Plugin!");
+                getLogger().log(Level.INFO,"Discord-Verify | Das Plugin wird nun deaktiviert!");
+                Bukkit.getPluginManager().disablePlugin(this);
+            }
+        }
     }
 
     @Override
     public void onDisable() {
-        jda.shutdownNow();
-        hikariCP.close();
+        bot.shutdown();
     }
 
-    private void startDiscordBot() {
-        try {
-            jda = JDABuilder.createDefault("OTAyNjI4MDM3OTIzODQ4Mjgy.YXhL3g.J9GdamEdJuowG-Wn7EEJC7iy2MA").build();
-            jda.addEventListener(new DiscordEvents(this));
-        }catch (Exception e) {
-            System.out.println("[DiscordVerifyBot] The provided token is invalid!");
-        }
-    }
-
-
-    public JDA getJda() {
-        return jda;
+    private void onInit() {
+        saveDefaultConfig();
+        bot = new Bot(getConfig().getString("discord.token"), this);
+        getLogger().log(Level.INFO,"Discord-Verify | Der Bot wurde erfolgreich gestartet!");
+        prefix = getConfig().getString("messages.prefix").replace("&", "§");
+        verifyQueueRepository = new VerifyQueueRepository();
+        getCommand("verify").setExecutor(new VerifyCommand(this));
+        Bukkit.getPluginManager().registerEvents(new PlayerDamageListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new BlockListener(this), this);
+        verifiedPlayersFile = new VerifiedPlayersFile(this);
+        getLogger().log(Level.INFO,"Discord-Verify | Das Plugin ist einsatzbereit!");
     }
 
     public static DiscordVerifyBot getInstance() {
         return instance;
     }
 
-    public ArrayList<String> getJoinedPlayers() {
-        return JoinedPlayers;
+    public Bot getBot() {
+        return bot;
     }
 
-    public Methods getMethods() {
-        return methods;
+    public String getPrefix() {
+        return prefix;
     }
 
-    public HikariCP getHikariCP() {
-        return hikariCP;
+
+    public VerifiedPlayersFile getVerifiedPlayersFile() {
+        return verifiedPlayersFile;
     }
 
-    public HashMap<Player, String> getVerifyCodes() {
-        return VerifyCodes;
-    }
-
-    public HashMap<Player, String> getDiscordID() {
-        return DiscordID;
-    }
-
-    public ArrayList<User> getRequestedCode() {
-        return requestedCode;
-    }
-
-    public HashMap<Player, String> getFirstDiscordID() {
-        return FirstDiscordID;
+    public VerifyQueueRepository getVerifyQueueRepository() {
+        return verifyQueueRepository;
     }
 }
